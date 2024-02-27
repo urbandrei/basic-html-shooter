@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>shooter</title>
+<script>
+window.onload = function() {
+
+let keys = []
+let zombies = []
+let bullets = []
+let reload = 0
+let timer = 0
+let clicking = 0
+let mousex = 0
+let mousey = 0
+let playerspeed = 3
+let zombiespeed = 0.5
+let state = "start"
+
+player = document.createElement("Div")
+player.style.position = "fixed"
+player.style.width = "30px"
+player.style.height = "30px"
+player.style.bottom = window.innerHeight/2-15 + "px"
+player.style.left = window.innerWidth/2-15 + "px"
+player.style.backgroundColor = "black"
+document.body.appendChild(player)
+
+toptext = document.createElement("Div")
+toptext.style.position = "fixed"
+toptext.style.width = "100%"
+toptext.style.height = "30px"
+toptext.style.bottom = window.innerHeight/2 +20+ "px"
+toptext.style.left = "0px"
+toptext.style.textAlign = "center"
+toptext.style.fontSize = "30px"
+toptext.innerHTML = "Zombie Shooter"
+document.body.appendChild(toptext)
+
+bottomtext = document.createElement("Div")
+bottomtext.style.position = "fixed"
+bottomtext.style.width = "100%"
+bottomtext.style.height = "30px"
+bottomtext.style.top = window.innerHeight/2+20 + "px"
+bottomtext.style.left = "0px"
+bottomtext.style.textAlign = "center"
+bottomtext.style.fontSize = "30px"
+bottomtext.innerHTML = "WASD to move<br>click to shoot"
+document.body.appendChild(bottomtext)
+
+window.addEventListener('resize', function(event) {
+	console.log("this")
+	player.style.bottom = window.innerHeight/2-15 + "px"
+	player.style.left = window.innerWidth/2-15 + "px"
+	toptext.style.bottom = window.innerHeight/2+20 + "px"
+	bottomtext.style.top = window.innerHeight/2+20 + "px"
+})
+document.addEventListener('keydown', function(event) {
+	if(!keys.includes(event.key)) { keys.push(event.key) }
+})
+document.addEventListener('keyup', function(event) {  
+	i = keys.indexOf(event.key)
+	if(i != -1) { keys.splice(i,1) }
+})
+document.addEventListener('mousedown', function(event) {
+	clicking = 1
+})
+document.addEventListener('mouseup', function(event) {
+	clicking = 0
+})
+document.addEventListener('mousemove', function(event) {
+	mousex = event.clientX
+	mousey = event.clientY
+})
+
+setInterval(function() {
+if(state == "game") {
+	zombiespeed = Math.max(1.5,timer/600)
+	timer++
+	reload--
+	while(zombies.length < Math.min(timer/200,15)) {
+		randarray = []
+		if(keys.includes("w")) {
+			randarray.push(3)
+		}
+		if(keys.includes("d")) {
+			randarray.push(2)
+		}
+		if(keys.includes("s")) {
+			randarray.push(1)
+		}
+		if(keys.includes("a")) {
+			randarray.push(0)
+		}
+		if(randarray.length == 0) {
+			rand = Math.floor(Math.random()*4)
+		} else {
+			rand = randarray[Math.floor(Math.random()*randarray.length)]
+		}
+		if(rand%2 == 0) {
+			x = (rand-1)*(window.innerWidth/2+15)
+			y = (Math.random()-.5)*window.innerHeight
+		} else {
+			x = (Math.random()-.5)*window.innerWidth
+			y = (rand-2)*(window.innerHeight/2+15)
+		}
+		zomb = document.createElement("Div")
+		zomb.style.position = "fixed"
+		zomb.style.width = "30px"
+		zomb.style.height = "30px"
+		zomb.style.bottom = x + window.innerHeight/2-15+ "px"
+		zomb.style.left = y + window.innerWidth/2-15 + "px"
+		zomb.style.backgroundColor = "red"
+		document.body.appendChild(zomb)
+
+		zombies.push([x,y,zomb])
+	}
+	if(clicking && reload < 0) {
+		reload = 20
+		x = mousex - (window.innerWidth/2)
+		y = mousey - (window.innerHeight/2)
+		scale = (x**2+y**2)**(1/2)
+		x = x*10/scale
+		y = -y*10/scale
+		bull = document.createElement("Div")
+		bull.style.position = "fixed"
+		bull.style.width = "10px"
+		bull.style.height = "10px"
+		bull.style.bottom = x + window.innerHeight/2+ "px"
+		bull.style.left = y + window.innerWidth/2 + "px"
+		bull.style.backgroundColor = "black"
+		document.body.appendChild(bull)
+		bullets.push([0,0,x,y,bull])
+	}
+	for(let i = bullets.length-1;i>=0;i--) {
+		bullets[i][0] = bullets[i][0] + bullets[i][2]
+		bullets[i][1] = bullets[i][1] + bullets[i][3]
+		if(keys.includes("w")) {
+			bullets[i][1] = bullets[i][1]-playerspeed
+		}
+		if(keys.includes("a")) {
+			bullets[i][0] = bullets[i][0]+playerspeed
+		}
+		if(keys.includes("s")) {
+			bullets[i][1] = bullets[i][1]+playerspeed
+		}
+		if(keys.includes("d")) {
+			bullets[i][0] = bullets[i][0]-playerspeed
+		}
+		if(Math.abs(bullets[i][0]) > window.innerWidth || Math.abs(bullets[i][1]) >window.innerHeight) {
+			bullets[i][4].remove()
+			bullets.splice(i,1)
+		}
+		else {
+			bullets[i][4].style.left = bullets[i][0] + window.innerWidth/2-5 +"px"
+			bullets[i][4].style.bottom = bullets[i][1] + window.innerHeight/2-5 +"px"
+		}
+	}
+	for(let i = zombies.length-1;i>=0;i--) {
+		scale = (zombies[i][0]**2 + zombies[i][1]**2)**(1/2)
+		if(scale > 5) {
+			zombies[i][0] = zombies[i][0]*(scale-zombiespeed)/scale
+			zombies[i][1] = zombies[i][1]*(scale-zombiespeed)/scale
+		} else {
+			toptext.innerHTML = "GAME OVER"
+			bottomtext.innerHTML = "WASD or click to<br>play again"
+			state = "game over"
+			timer = 0
+		}
+		if(keys.includes("w")) {
+			zombies[i][1] = zombies[i][1]-playerspeed
+		}
+		if(keys.includes("a")) {
+			zombies[i][0] = zombies[i][0]+playerspeed
+		}
+		if(keys.includes("s")) {
+			zombies[i][1] = zombies[i][1]+playerspeed
+		}
+		if(keys.includes("d")) {
+			zombies[i][0] = zombies[i][0]-playerspeed
+		}
+		hit = 0
+		for(let j = bullets.length-1; j>=0;j--) {
+			if(bullets[j][0]+10 > zombies[i][0] && bullets[j][0] -30 < zombies[i][0] && bullets[j][1]+10 > zombies[i][1] && bullets[j][1]-30 < zombies[i][1] ){
+				bullets[j][4].remove()
+				bullets.splice(j,1)
+				hit = 1
+			}
+		}
+		if(hit) {
+			zombies[i][2].remove()
+			zombies.splice(i,1)
+		}
+		else {
+			zombies[i][2].style.left = zombies[i][0] +window.innerWidth/2-5+ "px"
+			zombies[i][2].style.bottom = zombies[i][1] +window.innerHeight/2-5+ "px"
+		}
+	}
+}
+else if(state == "start") {
+	if(clicking || keys.includes("w") || keys.includes("a") || keys.includes("s") || keys.includes("d")) {
+		toptext.innerHTML = ""
+		bottomtext.innerHTML = ""
+		state = "game"
+	}
+}
+else if(state == "game over") {
+	timer++
+	if(timer > 150 && (clicking || keys.includes("w") || keys.includes("a") || keys.includes("s") || keys.includes("d"))) {
+		for(let i = bullets.length-1; i >=0;i-- ) {
+			bullets[i][4].remove()
+			bullets.splice(i,1)
+		}
+		for(let j = zombies.length-1; j >=0;j-- ) {
+			zombies[j][2].remove()
+			zombies.splice(j,1)
+		}
+		toptext.innerHTML = ""
+		bottomtext.innerHTML = ""
+		state = "game"
+		clicking = 0
+		keys = []
+	}
+}
+}, 1000/60)
+}
+</script>
+</head>
+
+<body style="background-color:white">
+</body>
+</html>
